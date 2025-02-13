@@ -36,6 +36,10 @@ import java.util.function.Function;
 
 import jdk.internal.misc.InnocuousThread;
 
+/*[IF CRIU_SUPPORT]*/
+import openj9.internal.criu.NotCheckpointSafe;
+/*[ENDIF] CRIU_SUPPORT */
+
 /**
  * CleanerImpl manages a set of object references and corresponding cleaning actions.
  * CleanerImpl provides the functionality of {@link java.lang.ref.Cleaner}.
@@ -273,6 +277,9 @@ public final class CleanerImpl implements Runnable {
         /**
          * Insert this PhantomCleanable in the list.
          */
+        /*[IF CRIU_SUPPORT]*/
+        @NotCheckpointSafe
+        /*[ENDIF] CRIU_SUPPORT */
         public synchronized void insert(PhantomCleanable<?> phc) {
             if (head.size == NODE_CAPACITY) {
                 // Head node is full, insert new one.
