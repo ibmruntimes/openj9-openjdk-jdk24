@@ -60,6 +60,7 @@ MODULES_FILTER += \
 NATIVE_ACCESS_MODULES += \
 	openj9.cuda \
 	openj9.dtfj \
+	$(if $(call equals, $(BUILD_OPENJCEPLUS), true), openjceplus) \
 	#
 
 TOP_SRC_DIRS += \
