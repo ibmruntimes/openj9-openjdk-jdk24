@@ -588,7 +588,7 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
     # Restrict the debug information created by Clang to avoid
     # too big object files and speed the build up a little bit
     # (see http://llvm.org/bugs/show_bug.cgi?id=7554)
-    TOOLCHAIN_CFLAGS_JVM="$TOOLCHAIN_CFLAGS_JVM -flimit-debug-info"
+    TOOLCHAIN_CFLAGS_JVM="$TOOLCHAIN_CFLAGS_JVM -flimit-debug-info -fstack-protector"
 
     # In principle the stack alignment below is cpu- and ABI-dependent and
     # should agree with values of StackAlignmentInBytes in various
@@ -606,7 +606,7 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
       TOOLCHAIN_CFLAGS_JDK="-pipe"
       TOOLCHAIN_CFLAGS_JDK_CONLY="-fno-strict-aliasing" # technically NOT for CXX
     fi
-    TOOLCHAIN_CFLAGS_JDK="$TOOLCHAIN_CFLAGS_JDK -fvisibility=hidden"
+    TOOLCHAIN_CFLAGS_JDK="$TOOLCHAIN_CFLAGS_JDK -fvisibility=hidden -fstack-protector"
 
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
     # Suggested additions: -qsrcmsg to get improved error reporting
@@ -806,7 +806,7 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_CPU_DEP],
       elif test "x$FLAGS_CPU" = xppc64le; then
         # Little endian machine uses ELFv2 ABI.
         # Use Power8, this is the first CPU to support PPC64 LE with ELFv2 ABI.
-        $1_CFLAGS_CPU_JVM="${$1_CFLAGS_CPU_JVM} -DABI_ELFv2 -mcpu=power8 -mtune=power8"
+        $1_CFLAGS_CPU_JVM="${$1_CFLAGS_CPU_JVM} -DABI_ELFv2 -mcpu=power8 -mtune=power10"
       fi
     elif test "x$FLAGS_CPU" = xs390x; then
       $1_CFLAGS_CPU="-mbackchain -march=z10"
@@ -823,6 +823,11 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_CPU_DEP],
       if test "x$FLAGS_CPU_ARCH" != xarm &&  test "x$FLAGS_CPU_ARCH" != xppc; then
         # for all archs except arm and ppc, prevent gcc to omit frame pointer
         $1_CFLAGS_CPU_JDK="${$1_CFLAGS_CPU_JDK} -fno-omit-frame-pointer"
+      fi
+      if test "x$FLAGS_CPU" = xppc64le; then
+        # Little endian machine uses ELFv2 ABI.
+        # Use Power8, this is the first CPU to support PPC64 LE with ELFv2 ABI.
+        $1_CFLAGS_CPU_JVM="${$1_CFLAGS_CPU_JVM} -DABI_ELFv2 -mcpu=power8 -mtune=power10"
       fi
     fi
     if test "x$OPENJDK_TARGET_OS" = xaix; then
