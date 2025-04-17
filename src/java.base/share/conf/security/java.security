@@ -212,7 +212,7 @@ RestrictedSecurity.NSS.140-2.securerandom.algorithm = PKCS11
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.name = OpenJCEPlusFIPS Cryptographic Module FIPS 140-3
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.default = false
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.fips = true
-RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.hash = SHA256:bea1b7da967ac27720b7bc439ccd2d4250ebe783a6919a8e7047e6a6b862a116
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.hash = SHA256:165e640b29e9a250409e353039f735c47dcd1043b056fb5ccd224698d9ae8a1e
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.number = Certificate #XXX
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.policy = https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.sunsetDate = 2026-09-21
@@ -294,6 +294,8 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.1 = com.ibm.crypto.plu
     {Mac, HmacSHA3-512, *}, \
     {Mac, HmacSHA384, *}, \
     {Mac, HmacSHA512, *}, \
+    {MessageDigest, MD5, *, ModuleAndFullClassName:java.base/java.util.UUID}, \
+    {MessageDigest, SHA-1, *, ModuleAndFullClassName:java.base/java.io.ObjectStreamClass}, \
     {MessageDigest, SHA-224, *}, \
     {MessageDigest, SHA-256, *}, \
     {MessageDigest, SHA-384, *}, \
@@ -303,6 +305,10 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.1 = com.ibm.crypto.plu
     {MessageDigest, SHA3-384, *}, \
     {MessageDigest, SHA3-512, *}, \
     {SecretKeyFactory, AES, *}, \
+    {SecretKeyFactory, PBKDF2WithHmacSHA224, *}, \
+    {SecretKeyFactory, PBKDF2WithHmacSHA256, *}, \
+    {SecretKeyFactory, PBKDF2WithHmacSHA384, *}, \
+    {SecretKeyFactory, PBKDF2WithHmacSHA512, *}, \
     {SecureRandom, SHA256DRBG, *}, \
     {SecureRandom, SHA512DRBG, *}, \
     {Signature, NONEwithECDSA, *}, \
@@ -325,7 +331,17 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.2 = sun.security.provi
     {CertStore, com.sun.security.IndexedCollection, ImplementedIn=Software}, \
     {Configuration, JavaLoginConfig, *}, \
     {Policy, JavaPolicy, *}]
-RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.3 = sun.security.ssl.SunJSSE
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.3 = sun.security.ssl.SunJSSE [ \
+    {KeyManagerFactory, NewSunX509, *}, \
+    {KeyManagerFactory, SunX509, *}, \
+    {SSLContext, Default, *}, \
+    {SSLContext, DTLS, *}, \
+    {SSLContext, DTLSv1.2, *}, \
+    {SSLContext, TLS, *}, \
+    {SSLContext, TLSv1.2, *}, \
+    {SSLContext, TLSv1.3, *}, \
+    {TrustManagerFactory, PKIX, *}, \
+    {TrustManagerFactory, SunX509, *}]
 
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.javax.net.ssl.keyStore = NONE
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.securerandom.provider = OpenJCEPlusFIPS
@@ -1567,6 +1583,9 @@ jdk.sasl.disabledMechanisms=
 #   ENTRUST_TLS : Distrust TLS Server certificates anchored by
 #   an Entrust root CA and issued after November 11, 2024.
 #
+#   CAMERFIRMA_TLS : Distrust TLS Server certificates anchored by
+#   a Camerfirma root CA and issued after April 15, 2025.
+#
 # Leading and trailing whitespace surrounding each value are ignored.
 # Unknown values are ignored. If the property is commented out or set to the
 # empty String, no policies are enforced.
@@ -1578,7 +1597,7 @@ jdk.sasl.disabledMechanisms=
 # jdk.certpath.disabledAlgorithms; those restrictions are still enforced even
 # if this property is not enabled.
 #
-jdk.security.caDistrustPolicies=SYMANTEC_TLS,ENTRUST_TLS
+jdk.security.caDistrustPolicies=SYMANTEC_TLS,ENTRUST_TLS,CAMERFIRMA_TLS
 
 #
 # FilePermission path canonicalization
