@@ -190,7 +190,7 @@ class GetThreadStateTest {
             synchronized (lock) {
                 lock.notifyAll();
                 expected = JVMTI_THREAD_STATE_ALIVE | JVMTI_THREAD_STATE_BLOCKED_ON_MONITOR_ENTER;
-                check(thread, expected);
+                await(thread, expected);
 
                 // re-test with interrupt status set
                 thread.interrupt();
@@ -242,7 +242,7 @@ class GetThreadStateTest {
             synchronized (lock) {
                 lock.notifyAll();
                 expected = JVMTI_THREAD_STATE_ALIVE | JVMTI_THREAD_STATE_BLOCKED_ON_MONITOR_ENTER;
-                check(thread, expected);
+                await(thread, expected);
 
                 // re-test with interrupt status set
                 thread.interrupt();
