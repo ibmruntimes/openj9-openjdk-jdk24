@@ -33,6 +33,7 @@ package sun.security.ssl;
 
 /*[IF OPENJCEPLUS_SUPPORT]*/
 import java.lang.IllegalAccessException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.security.InvalidAlgorithmParameterException;
 /*[ENDIF] OPENJCEPLUS_SUPPORT */
@@ -66,7 +67,7 @@ public final class HKDF {
     private final int hmacLen;
 
     /*[IF OPENJCEPLUS_SUPPORT]*/
-    private KeyGenerator hkdfGenerator;
+    private final KeyGenerator hkdfGenerator;
     /*[ENDIF] OPENJCEPLUS_SUPPORT */
 
     /**
@@ -86,6 +87,8 @@ public final class HKDF {
         if (RestrictedSecurity.isFIPSEnabled()) {
             String hkdfAlg = "kda-hkdf-with-" + hashAlg.replace("-", "").toLowerCase();
             hkdfGenerator = KeyGenerator.getInstance(hkdfAlg);
+        } else {
+            hkdfGenerator = null;
         }
         /*[ENDIF] OPENJCEPLUS_SUPPORT */
         String hmacAlg = "Hmac" + hashAlg.replace("-", "");
@@ -116,20 +119,19 @@ public final class HKDF {
             salt = new SecretKeySpec(new byte[hmacLen], "HKDF-Salt");
         }
         /*[IF OPENJCEPLUS_SUPPORT]*/
-        if (RestrictedSecurity.isFIPSEnabled()) {
+        if (hkdfGenerator != null) {
             if (SSLLogger.isOn && SSLLogger.isOn("ssl")) {
                 SSLLogger.info("HKDF extract in FIPS mode: Using OpenJCEPlusFIPS");
             }
             try {
-                Class hkdfExtractSpec = Class.forName("ibm.security.internal.spec.HKDFExtractParameterSpec", true, ClassLoader.getSystemClassLoader());
-                Class[] parameterType = new Class[3];
-                parameterType[0] = SecretKey.class;
-                parameterType[1] = byte[].class;
-                parameterType[2] = String.class;
-                AlgorithmParameterSpec hkdfParams = (AlgorithmParameterSpec) hkdfExtractSpec.getDeclaredConstructor(parameterType).newInstance(inputKey, salt.getEncoded(), keyAlg);
+                Class<?> hkdfExtractSpec = Class.forName("ibm.security.internal.spec.HKDFExtractParameterSpec", true, ClassLoader.getSystemClassLoader());
+                Constructor<?> ctor = hkdfExtractSpec.getDeclaredConstructor(SecretKey.class, byte[].class, String.class);
+                AlgorithmParameterSpec hkdfParams = (AlgorithmParameterSpec) ctor.newInstance(inputKey, salt.getEncoded(), keyAlg);
                 hkdfGenerator.init(hkdfParams);
                 return hkdfGenerator.generateKey();
-            } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | InvalidAlgorithmParameterException | IllegalAccessException | InvocationTargetException exc) {
+            } catch (ClassCastException | ClassNotFoundException | NoSuchMethodException
+                    | InstantiationException | InvalidAlgorithmParameterException | IllegalAccessException
+                    | InvocationTargetException exc) {
                 throw new SecurityException(exc);
             }
         }
@@ -183,21 +185,19 @@ public final class HKDF {
     public SecretKey expand(SecretKey pseudoRandKey, byte[] info, int outLen,
             String keyAlg) throws InvalidKeyException {
         /*[IF OPENJCEPLUS_SUPPORT]*/
-        if (RestrictedSecurity.isFIPSEnabled()) {
+        if (hkdfGenerator != null) {
             if (SSLLogger.isOn && SSLLogger.isOn("ssl")) {
                 SSLLogger.info("HKDF expand in FIPS mode: Using OpenJCEPlusFIPS");
             }
             try {
-                Class hkdfExpandSpec = Class.forName("ibm.security.internal.spec.HKDFExpandParameterSpec", true, ClassLoader.getSystemClassLoader());
-                Class[] parameterType = new Class[4];
-                parameterType[0] = SecretKey.class;
-                parameterType[1] = byte[].class;
-                parameterType[2] = long.class;
-                parameterType[3] = String.class;
-                AlgorithmParameterSpec hkdfParams = (AlgorithmParameterSpec) hkdfExpandSpec.getDeclaredConstructor(parameterType).newInstance(pseudoRandKey, info, outLen, keyAlg);
+                Class<?> hkdfExpandSpec = Class.forName("ibm.security.internal.spec.HKDFExpandParameterSpec", true, ClassLoader.getSystemClassLoader());
+                Constructor<?> ctor = hkdfExpandSpec.getDeclaredConstructor(SecretKey.class, byte[].class, long.class, String.class);
+                AlgorithmParameterSpec hkdfParams = (AlgorithmParameterSpec) ctor.newInstance(pseudoRandKey, info, outLen, keyAlg);
                 hkdfGenerator.init(hkdfParams);
                 return hkdfGenerator.generateKey();
-            } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | InvalidAlgorithmParameterException | IllegalAccessException | InvocationTargetException exc) {
+            } catch (ClassCastException | ClassNotFoundException | NoSuchMethodException
+                    | InstantiationException | InvalidAlgorithmParameterException | IllegalAccessException
+                    | InvocationTargetException exc) {
                 throw new SecurityException(exc);
             }
         }
