@@ -68,6 +68,8 @@ public final class HKDF {
 
     /*[IF OPENJCEPLUS_SUPPORT]*/
     private final KeyGenerator hkdfGenerator;
+    private final Constructor<?> extractCtor;
+    private final Constructor<?> expandCtor;
     /*[ENDIF] OPENJCEPLUS_SUPPORT */
 
     /**
@@ -87,8 +89,14 @@ public final class HKDF {
         if (RestrictedSecurity.isFIPSEnabled()) {
             String hkdfAlg = "kda-hkdf-with-" + hashAlg.replace("-", "").toLowerCase();
             hkdfGenerator = KeyGenerator.getInstance(hkdfAlg);
+            Class<?> hkdfExtractSpec = Class.forName("ibm.security.internal.spec.HKDFExtractParameterSpec", true, ClassLoader.getSystemClassLoader());
+            extractCtor = hkdfExtractSpec.getDeclaredConstructor(SecretKey.class, byte[].class, String.class);
+            Class<?> hkdfExpandSpec = Class.forName("ibm.security.internal.spec.HKDFExpandParameterSpec", true, ClassLoader.getSystemClassLoader());
+            expandCtor = hkdfExpandSpec.getDeclaredConstructor(SecretKey.class, byte[].class, long.class, String.class);
         } else {
             hkdfGenerator = null;
+            extractCtor = null;
+            expandCtor = null;
         }
         /*[ENDIF] OPENJCEPLUS_SUPPORT */
         String hmacAlg = "Hmac" + hashAlg.replace("-", "");
@@ -124,9 +132,7 @@ public final class HKDF {
                 SSLLogger.info("HKDF extract in FIPS mode: Using OpenJCEPlusFIPS");
             }
             try {
-                Class<?> hkdfExtractSpec = Class.forName("ibm.security.internal.spec.HKDFExtractParameterSpec", true, ClassLoader.getSystemClassLoader());
-                Constructor<?> ctor = hkdfExtractSpec.getDeclaredConstructor(SecretKey.class, byte[].class, String.class);
-                AlgorithmParameterSpec hkdfParams = (AlgorithmParameterSpec) ctor.newInstance(inputKey, salt.getEncoded(), keyAlg);
+                AlgorithmParameterSpec hkdfParams = (AlgorithmParameterSpec) extractCtor.newInstance(inputKey, salt.getEncoded(), keyAlg);
                 hkdfGenerator.init(hkdfParams);
                 return hkdfGenerator.generateKey();
             } catch (ClassCastException | ClassNotFoundException | NoSuchMethodException
@@ -190,9 +196,7 @@ public final class HKDF {
                 SSLLogger.info("HKDF expand in FIPS mode: Using OpenJCEPlusFIPS");
             }
             try {
-                Class<?> hkdfExpandSpec = Class.forName("ibm.security.internal.spec.HKDFExpandParameterSpec", true, ClassLoader.getSystemClassLoader());
-                Constructor<?> ctor = hkdfExpandSpec.getDeclaredConstructor(SecretKey.class, byte[].class, long.class, String.class);
-                AlgorithmParameterSpec hkdfParams = (AlgorithmParameterSpec) ctor.newInstance(pseudoRandKey, info, outLen, keyAlg);
+                AlgorithmParameterSpec hkdfParams = (AlgorithmParameterSpec) expandCtor.newInstance(pseudoRandKey, info, outLen, keyAlg);
                 hkdfGenerator.init(hkdfParams);
                 return hkdfGenerator.generateKey();
             } catch (ClassCastException | ClassNotFoundException | NoSuchMethodException
