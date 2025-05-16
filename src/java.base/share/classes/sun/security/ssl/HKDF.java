@@ -68,8 +68,25 @@ public final class HKDF {
 
     /*[IF OPENJCEPLUS_SUPPORT]*/
     private final KeyGenerator hkdfGenerator;
-    private final Constructor<?> extractCtor;
-    private final Constructor<?> expandCtor;
+    private static final Constructor<?> extractCtor;
+    private static final Constructor<?> expandCtor;
+
+    static {
+        try {
+            if (RestrictedSecurity.isFIPSEnabled()) {
+                Class<?> hkdfExtractSpec = Class.forName("ibm.security.internal.spec.HKDFExtractParameterSpec", true, ClassLoader.getSystemClassLoader());
+                extractCtor = hkdfExtractSpec.getDeclaredConstructor(SecretKey.class, byte[].class, String.class);
+                Class<?> hkdfExpandSpec = Class.forName("ibm.security.internal.spec.HKDFExpandParameterSpec", true, ClassLoader.getSystemClassLoader());
+                expandCtor = hkdfExpandSpec.getDeclaredConstructor(SecretKey.class, byte[].class, long.class, String.class);
+            } else {
+                extractCtor = null;
+                expandCtor = null;
+            }
+            } catch (ClassCastException | ClassNotFoundException | NoSuchMethodException
+                    | InvalidAlgorithmParameterException  exc) {
+                throw new SecurityException(exc);
+            }
+    }
     /*[ENDIF] OPENJCEPLUS_SUPPORT */
 
     /**
@@ -89,14 +106,8 @@ public final class HKDF {
         if (RestrictedSecurity.isFIPSEnabled()) {
             String hkdfAlg = "kda-hkdf-with-" + hashAlg.replace("-", "").toLowerCase();
             hkdfGenerator = KeyGenerator.getInstance(hkdfAlg);
-            Class<?> hkdfExtractSpec = Class.forName("ibm.security.internal.spec.HKDFExtractParameterSpec", true, ClassLoader.getSystemClassLoader());
-            extractCtor = hkdfExtractSpec.getDeclaredConstructor(SecretKey.class, byte[].class, String.class);
-            Class<?> hkdfExpandSpec = Class.forName("ibm.security.internal.spec.HKDFExpandParameterSpec", true, ClassLoader.getSystemClassLoader());
-            expandCtor = hkdfExpandSpec.getDeclaredConstructor(SecretKey.class, byte[].class, long.class, String.class);
         } else {
             hkdfGenerator = null;
-            extractCtor = null;
-            expandCtor = null;
         }
         /*[ENDIF] OPENJCEPLUS_SUPPORT */
         String hmacAlg = "Hmac" + hashAlg.replace("-", "");
@@ -135,9 +146,7 @@ public final class HKDF {
                 AlgorithmParameterSpec hkdfParams = (AlgorithmParameterSpec) extractCtor.newInstance(inputKey, salt.getEncoded(), keyAlg);
                 hkdfGenerator.init(hkdfParams);
                 return hkdfGenerator.generateKey();
-            } catch (ClassCastException | ClassNotFoundException | NoSuchMethodException
-                    | InstantiationException | InvalidAlgorithmParameterException | IllegalAccessException
-                    | InvocationTargetException exc) {
+            } catch (ExceptionInInitializerError | IllegalAccessException | InstantiationException | InvocationTargetException exc) {
                 throw new SecurityException(exc);
             }
         }
@@ -199,9 +208,7 @@ public final class HKDF {
                 AlgorithmParameterSpec hkdfParams = (AlgorithmParameterSpec) expandCtor.newInstance(pseudoRandKey, info, outLen, keyAlg);
                 hkdfGenerator.init(hkdfParams);
                 return hkdfGenerator.generateKey();
-            } catch (ClassCastException | ClassNotFoundException | NoSuchMethodException
-                    | InstantiationException | InvalidAlgorithmParameterException | IllegalAccessException
-                    | InvocationTargetException exc) {
+            } catch (ExceptionInInitializerError | IllegalAccessException | InstantiationException | InvocationTargetException exc) {
                 throw new SecurityException(exc);
             }
         }
