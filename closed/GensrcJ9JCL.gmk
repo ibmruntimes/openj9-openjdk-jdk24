@@ -57,6 +57,7 @@ $(eval $(call SetupCopyFiles,COPY_OVERLAY_FILES, \
 		src/java.base/share/classes/sun/security/jca/ProviderList.java \
 		src/java.base/share/classes/sun/security/provider/DigestBase.java \
 		src/java.base/share/classes/sun/security/provider/SecureRandom.java \
+		src/java.base/share/classes/sun/security/ssl/HKDF.java \
 		src/java.base/unix/classes/java/lang/ProcessEnvironment.java \
 		src/java.base/unix/classes/sun/security/provider/NativePRNG.java \
 		src/java.se/share/data/jdwp/jdwp.spec \
